@@ -31,6 +31,8 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y dpkg-dev bzip2 unzip
 
       - name: Build repo
+        env:
+          CYDIA_URL: "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/"
         run: |
           chmod +x build.sh
           ./build.sh public
