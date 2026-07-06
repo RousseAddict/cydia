@@ -1,0 +1,51 @@
+name: Build & deploy Cydia repo to Pages
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - apps.conf
+      - build.sh
+      - .github/workflows/build-pages.yml
+  schedule:
+    # Hourly: pick up new ipas pushed to the source app repos.
+    - cron: "0 * * * *"
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install packaging tooling
+        run: sudo apt-get update && sudo apt-get install -y dpkg-dev bzip2 unzip
+
+      - name: Build repo
+        run: |
+          chmod +x build.sh
+          ./build.sh public
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
