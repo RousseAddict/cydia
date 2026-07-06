@@ -9,8 +9,8 @@ on:
       - build.sh
       - .github/workflows/build-pages.yml
   schedule:
-    # Hourly: pick up new ipas pushed to the source app repos.
-    - cron: "0 * * * *"
+    # Weekly (Mondays 06:00 UTC): pick up new ipas pushed to the source app repos.
+    - cron: "0 6 * * 1"
 
 permissions:
   contents: read

@@ -18,6 +18,12 @@ SRC=".src"
 
 mkdir -p "$OUT" "$DEBS" "$SRC"
 
+# Repo/site icon: ginger.png -> site favicon + Cydia repo icon (CydiaIcon.png).
+if [ -f ginger.png ]; then
+  cp ginger.png "$OUT/ginger.png"
+  cp ginger.png "$OUT/CydiaIcon.png"
+fi
+
 # Landing-page metadata, accumulated per package during the build.
 declare -A APP_NAME APP_IOS
 ORDER=()
@@ -122,6 +128,7 @@ url="${CYDIA_URL:-}"
   cat <<'HTML'
 <!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="ginger.png">
 <style>
   :root{color-scheme:light dark}
   body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
