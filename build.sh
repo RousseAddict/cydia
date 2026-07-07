@@ -24,6 +24,9 @@ if [ -f ginger.png ]; then
   cp ginger.png "$OUT/CydiaIcon.png"
 fi
 
+# GitHub Pages custom-domain marker (must be in the deployed artifact root).
+[ -f CNAME ] && cp CNAME "$OUT/CNAME"
+
 # Landing-page metadata, accumulated per package during the build.
 declare -A APP_NAME APP_IOS
 ORDER=()
@@ -153,7 +156,18 @@ HTML
   echo "<title>${OWNER} Cydia Repo</title></head><body>"
   echo "<h1>${OWNER} Cydia Repo</h1>"
   echo "<p class=\"sub\">Legacy iOS apps by ${OWNER}.</p>"
-  [ -n "$url" ] && echo "<p>Add this source in Cydia:</p><code class=\"src\">deb ${url} ./</code>"
+  if [ -n "$url" ]; then
+    echo "<p>Add a source in Cydia / Sileo:</p>"
+    case "$url" in
+      http://*)
+        echo "<p class=\"sub\">Modern iOS (HTTPS):</p><code class=\"src\">deb https://${url#http://} ./</code>"
+        echo "<p class=\"sub\">iOS 6/7 without modern TLS (HTTP):</p><code class=\"src\">deb ${url} ./</code>"
+        ;;
+      *)
+        echo "<code class=\"src\">deb ${url} ./</code>"
+        ;;
+    esac
+  fi
   echo "<ul>"
   for pkg in "${ORDER[@]}"; do
     badges=""

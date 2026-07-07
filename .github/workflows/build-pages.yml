@@ -32,7 +32,8 @@ jobs:
 
       - name: Build repo
         env:
-          CYDIA_URL: "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/"
+          # Custom domain, served over plain HTTP for legacy iOS devices.
+          CYDIA_URL: "http://cydia.rousseaddict.online/"
         run: |
           chmod +x build.sh
           ./build.sh public
