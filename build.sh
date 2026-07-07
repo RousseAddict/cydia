@@ -3,12 +3,13 @@
 #
 # Each app repo contains one or more build/*.ipa files. When an app ships
 # several iOS-specific builds (e.g. oldpipe_ios6.ipa, oldpipe_ios7.ipa,
-# oldpipe_ios8.ipa) they are packaged under the SAME package id, each with a
-# `Depends: firmware (>= X)` lower bound and an iOS-ascending version string.
-# Cydia/APT installs the highest-versioned build whose firmware bound the
-# device satisfies, falling back to the next-lower build for iOS versions with
-# no dedicated ipa. (No `<< Y` upper bound: legacy iOS 6/7 Cydia cannot parse
-# a two-clause firmware dependency and aborts the whole index.)
+# oldpipe_ios8.ipa) they are packaged under the SAME package id, each gated by
+# a SINGLE-clause `Depends: firmware` bound (lowest build = upper cap to the
+# next build's iOS, every higher build = its own lower bound). This makes
+# exactly one build installable per firmware, so Cydia auto-selects the right
+# build and iOS versions with no dedicated ipa fall back to the next-lower one.
+# Never a two-clause, comma-joined firmware dependency: legacy iOS 6/7 Cydia
+# cannot parse that and aborts the whole index.
 #
 # Usage: ./build.sh [output_dir]   (default: public)
 set -euo pipefail
@@ -67,18 +68,30 @@ while IFS='|' read -r repo package name section description; do
   APP_NAME[$package]="$name"
 
   count="$(git -C "$repodir" rev-list --count HEAD)"
+  total="${#sorted[@]}"
 
   for i in "${!sorted[@]}"; do
     n="${sorted[$i]%%:*}"
     ipa="${sorted[$i]#*:}"
 
-    # Lower bound only. Legacy Cydia/APT on iOS 6/7 cannot parse a second
-    # firmware clause / the `<<` upper bound and aborts the whole index
-    # ("dependencies can't be parsed"). APT already installs the highest
-    # eligible candidate, and our version string sorts by iOS ascending, so a
-    # device gets the highest build its firmware allows, falling back to the
-    # next-lower build automatically -- no upper bound required.
-    depends="firmware (>= ${n}.0)"
+    # SINGLE-clause firmware bounds only. Legacy Cydia/APT on iOS 6/7 aborts
+    # the whole index ("dependencies can't be parsed") when a package version
+    # carries a two-clause, comma-joined firmware dependency -- so we never
+    # emit one. Instead:
+    #   - the lowest build is capped by an upper bound to the next build's iOS
+    #   - every higher build is floored by its own iOS
+    # This makes exactly one build installable per firmware (the top build
+    # stays installable on all newer iOS), so Cydia auto-selects the right
+    # build with no manual "downgrade", and iOS versions without a dedicated
+    # ipa fall back to the next-lower build. The lowest build omits its own
+    # lower bound (these apps target iOS 6 as the floor, so `>= 6.0` is always
+    # true) to keep the dependency to a single clause.
+    if [ "$i" -eq 0 ] && [ "$total" -gt 1 ]; then
+      next="${sorted[1]%%:*}"
+      depends="firmware (<< ${next}.0)"
+    else
+      depends="firmware (>= ${n}.0)"
+    fi
 
     version="1.0+${count}-ios${n}"
     stage="$(mktemp -d)"; payload="$(mktemp -d)"
