@@ -4,9 +4,11 @@
 # Each app repo contains one or more build/*.ipa files. When an app ships
 # several iOS-specific builds (e.g. oldpipe_ios6.ipa, oldpipe_ios7.ipa,
 # oldpipe_ios8.ipa) they are packaged under the SAME package id, each with a
-# `Depends: firmware (>= X), firmware (<< Y)` bound. Cydia/APT then installs
-# the single build whose firmware range matches the device, and falls back to
-# the next-lower build for iOS versions with no dedicated ipa.
+# `Depends: firmware (>= X)` lower bound and an iOS-ascending version string.
+# Cydia/APT installs the highest-versioned build whose firmware bound the
+# device satisfies, falling back to the next-lower build for iOS versions with
+# no dedicated ipa. (No `<< Y` upper bound: legacy iOS 6/7 Cydia cannot parse
+# a two-clause firmware dependency and aborts the whole index.)
 #
 # Usage: ./build.sh [output_dir]   (default: public)
 set -euo pipefail
@@ -65,19 +67,18 @@ while IFS='|' read -r repo package name section description; do
   APP_NAME[$package]="$name"
 
   count="$(git -C "$repodir" rev-list --count HEAD)"
-  total="${#sorted[@]}"
 
   for i in "${!sorted[@]}"; do
     n="${sorted[$i]%%:*}"
     ipa="${sorted[$i]#*:}"
 
-    # Firmware bound: [thisIOS, nextBuildIOS). Highest build has no upper bound.
-    if [ "$((i + 1))" -lt "$total" ]; then
-      next="${sorted[$((i + 1))]%%:*}"
-      depends="firmware (>= ${n}.0), firmware (<< ${next}.0)"
-    else
-      depends="firmware (>= ${n}.0)"
-    fi
+    # Lower bound only. Legacy Cydia/APT on iOS 6/7 cannot parse a second
+    # firmware clause / the `<<` upper bound and aborts the whole index
+    # ("dependencies can't be parsed"). APT already installs the highest
+    # eligible candidate, and our version string sorts by iOS ascending, so a
+    # device gets the highest build its firmware allows, falling back to the
+    # next-lower build automatically -- no upper bound required.
+    depends="firmware (>= ${n}.0)"
 
     version="1.0+${count}-ios${n}"
     stage="$(mktemp -d)"; payload="$(mktemp -d)"
