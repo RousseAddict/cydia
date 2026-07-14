@@ -30,7 +30,7 @@ fi
 [ -f CNAME ] && cp CNAME "$OUT/CNAME"
 
 # Landing-page metadata, accumulated per package during the build.
-declare -A APP_NAME APP_IOS
+declare -A APP_NAME APP_IOS APP_SHA
 ORDER=()
 
 # Extract the iOS major version from an ipa filename (default 6 if untagged).
@@ -65,6 +65,7 @@ while IFS='|' read -r repo package name section description; do
 
   ORDER+=("$package")
   APP_NAME[$package]="$name"
+  APP_SHA[$package]="$(git -C "$repodir" rev-parse --short HEAD)"
 
   count="$(git -C "$repodir" rev-list --count HEAD)"
 
@@ -175,7 +176,7 @@ HTML
     for v in $(printf '%s\n' ${APP_IOS[$pkg]:-} | sort -un); do
       badges="${badges}<span class=\"badge\">iOS ${v}</span>"
     done
-    echo "<li><span class=\"name\">${APP_NAME[$pkg]}</span> <code>${pkg}</code> ${badges}</li>"
+    echo "<li><span class=\"name\">${APP_NAME[$pkg]}</span> <code>${pkg}</code> <code>${APP_SHA[$pkg]:-}</code> ${badges}</li>"
   done
   echo "</ul></body></html>"
 } > index.html
