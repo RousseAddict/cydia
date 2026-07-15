@@ -30,7 +30,7 @@ fi
 [ -f CNAME ] && cp CNAME "$OUT/CNAME"
 
 # Landing-page metadata, accumulated per package during the build.
-declare -A APP_NAME APP_IOS APP_SHA
+declare -A APP_NAME APP_IOS APP_SHA APP_REPO
 ORDER=()
 
 # Extract the iOS major version from an ipa filename (default 6 if untagged).
@@ -65,6 +65,7 @@ while IFS='|' read -r repo package name section description; do
 
   ORDER+=("$package")
   APP_NAME[$package]="$name"
+  APP_REPO[$package]="$repo"
   APP_SHA[$package]="$(git -C "$repodir" rev-parse --short HEAD)"
 
   count="$(git -C "$repodir" rev-list --count HEAD)"
@@ -146,7 +147,14 @@ url="${CYDIA_URL:-}"
   li{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem;
      padding:.75rem 0;border-top:1px solid #e5e5e5}
   .name{font-weight:600}
+  .name a{color:inherit;text-decoration:none}
+  .name a:hover{text-decoration:underline}
   code{color:#888;font-size:.85em}
+  code a{color:inherit;text-decoration:none;border-bottom:1px dotted #aaa}
+  code a:hover{border-bottom-style:solid}
+  .gh{display:inline-flex;align-items:center;opacity:.55}
+  .gh:hover{opacity:1}
+  .gh svg{width:1rem;height:1rem;fill:currentColor;vertical-align:-2px}
   .badge{font-size:.7rem;font-weight:600;background:#e0edff;color:#1a56db;
          border-radius:1rem;padding:.15rem .55rem}
   @media(prefers-color-scheme:dark){
@@ -176,7 +184,13 @@ HTML
     for v in $(printf '%s\n' ${APP_IOS[$pkg]:-} | sort -un); do
       badges="${badges}<span class=\"badge\">iOS ${v}</span>"
     done
-    echo "<li><span class=\"name\">${APP_NAME[$pkg]}</span> <code>${pkg}</code> <code>${APP_SHA[$pkg]:-}</code> ${badges}</li>"
+    repo="${APP_REPO[$pkg]:-}"
+    repo_url="https://github.com/${OWNER}/${repo}"
+    sha="${APP_SHA[$pkg]:-}"
+    sha_html="<code>${sha}</code>"
+    [ -n "$sha" ] && sha_html="<code><a href=\"${repo_url}/commit/${sha}\" title=\"View commit on GitHub\">${sha}</a></code>"
+    gh_link="<a class=\"gh\" href=\"${repo_url}\" title=\"View ${repo} on GitHub\" aria-label=\"View ${repo} on GitHub\"><svg viewBox=\"0 0 16 16\"><path d=\"M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z\"/></svg></a>"
+    echo "<li><span class=\"name\"><a href=\"${repo_url}\">${APP_NAME[$pkg]}</a></span> <code>${pkg}</code> ${sha_html} ${badges} ${gh_link}</li>"
   done
   echo "</ul></body></html>"
 } > index.html
