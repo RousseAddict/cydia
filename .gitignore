@@ -1,0 +1,5 @@
+# Clone cache for the source app repos (recreated by build.sh / build-ota.sh).
+.src/
+
+# Generated repo + OTA output.
+public/

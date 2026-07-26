@@ -7,6 +7,7 @@ on:
     paths:
       - apps.conf
       - build.sh
+      - build-ota.sh
       - .github/workflows/build-pages.yml
   schedule:
     # Weekly (Mondays 06:00 UTC): pick up new ipas pushed to the source app repos.
@@ -37,6 +38,14 @@ jobs:
         run: |
           chmod +x build.sh
           ./build.sh public
+
+      - name: Build OTA install page
+        env:
+          # itms-services requires an absolute HTTPS manifest URL.
+          OTA_URL: "https://cydia.rousseaddict.online/OTA"
+        run: |
+          chmod +x build-ota.sh
+          ./build-ota.sh public/OTA
 
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
