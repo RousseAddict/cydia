@@ -136,7 +136,9 @@ EOF
   [ -n "$buttons" ] || continue
 
   repo_url="https://github.com/$OWNER/$repo"
-  ROWS+=("<li><div class=\"info\"><span class=\"name\"><a href=\"$repo_url\">$(xesc "$name")</a></span><span class=\"desc\">$(xesc "$description")</span><code><a href=\"$repo_url/commit/$sha\">$short_sha</a></code></div><div class=\"btns\">$buttons</div></li>")
+  # Block-level divs (not spans): they stack on their own without flexbox, which
+  # iOS 6/7/8 Safari does not support unprefixed.
+  ROWS+=("<li><div class=\"info\"><div class=\"name\"><a href=\"$repo_url\">$(xesc "$name")</a></div><div class=\"desc\">$(xesc "$description")</div><div class=\"sha\"><a href=\"$repo_url/commit/$sha\">$short_sha</a></div></div><div class=\"btns\">$buttons</div></li>")
 done < apps.conf
 
 {
@@ -151,19 +153,27 @@ done < apps.conf
   h1{margin-bottom:.25rem}
   .sub{color:#888;margin-top:0}
   .note{background:#fff8e1;border-radius:.5rem;padding:.75rem 1rem;font-size:.85rem;margin:1.5rem 0}
+  /* Base layout uses only block/inline-block + margins so it degrades cleanly on
+     iOS 6/7/8 Safari, which has no unprefixed flexbox and no `gap`. */
   ul{list-style:none;padding:0}
-  li{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;
-     gap:.75rem;padding:1rem 0;border-top:1px solid #e5e5e5}
-  .info{display:flex;flex-direction:column;min-width:12rem}
+  li{padding:1rem 0;border-top:1px solid #e5e5e5}
+  .info{margin-bottom:.6rem}
   .name{font-weight:600}
   .name a{color:inherit;text-decoration:none}
   .desc{font-size:.8rem;color:#888}
-  code{color:#888;font-size:.75em}
-  code a{color:inherit;text-decoration:none;border-bottom:1px dotted #aaa}
-  .btns{display:flex;gap:.4rem;flex-wrap:wrap}
+  .sha{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.75rem;color:#888}
+  .sha a{color:inherit;text-decoration:none;border-bottom:1px dotted #aaa}
   .btn{display:inline-block;background:#1a56db;color:#fff;text-decoration:none;
-       font-size:.8rem;font-weight:600;border-radius:1rem;padding:.4rem .9rem}
+       font-size:.8rem;font-weight:600;border-radius:1rem;padding:.4rem .9rem;
+       margin:0 .4rem .4rem 0}
   .btn:active{opacity:.7}
+  /* Modern browsers only: pull the buttons alongside the app info. Old Safari
+     ignores @supports entirely and keeps the stacked layout above. */
+  @supports (display:flex){
+    li{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between}
+    .info{margin-bottom:0;min-width:12rem}
+    .btns{margin-bottom:-.4rem}
+  }
   @media(prefers-color-scheme:dark){
     li{border-color:#2c2c2e} .note{background:#2c2515}
   }

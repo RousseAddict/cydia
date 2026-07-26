@@ -143,6 +143,7 @@ url="${CYDIA_URL:-}"
   .sub{color:#888;margin-top:0}
   .src{display:block;background:#f4f4f5;border-radius:.5rem;padding:.75rem 1rem;
        font-family:ui-monospace,SFMono-Regular,Menlo,monospace;overflow-x:auto;margin:1rem 0 2rem}
+  .ota{margin:0 0 2rem}
   ul{list-style:none;padding:0}
   li{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem;
      padding:.75rem 0;border-top:1px solid #e5e5e5}
@@ -178,6 +179,7 @@ HTML
         ;;
     esac
   fi
+  echo "<p class=\"ota\">Or skip Cydia and <a href=\"OTA/\">install over the air &rarr;</a></p>"
   echo "<ul>"
   for pkg in "${ORDER[@]}"; do
     badges=""
