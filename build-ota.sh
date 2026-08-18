@@ -153,8 +153,15 @@ done < apps.conf
   h1{margin-bottom:.25rem}
   .sub{color:#888;margin-top:0}
   .note{background:#fff8e1;border-radius:.5rem;padding:.75rem 1rem;font-size:.85rem;margin:1.5rem 0}
-  /* Base layout uses only block/inline-block + margins so it degrades cleanly on
-     iOS 6/7/8 Safari, which has no unprefixed flexbox and no `gap`. */
+  /* Layout uses only block/inline-block + margins so it degrades cleanly on
+     iOS 6/7/8 Safari, which has no unprefixed flexbox and no `gap`. Buttons
+     always sit on their own row below the app info -- side-by-side wrapping
+     split badly on wide screens. */
+  .tabs{border-bottom:1px solid #e5e5e5;margin:1.25rem 0 1.5rem;font-size:.9rem}
+  .tab{display:inline-block;padding:.5rem .9rem;margin-bottom:-1px;
+       color:#888;font-weight:600;text-decoration:none;
+       border-bottom:2px solid transparent}
+  .tab.active{color:#1a56db;border-bottom-color:#1a56db}
   ul{list-style:none;padding:0}
   li{padding:1rem 0;border-top:1px solid #e5e5e5}
   .info{margin-bottom:.6rem}
@@ -167,26 +174,20 @@ done < apps.conf
        font-size:.8rem;font-weight:600;border-radius:1rem;padding:.4rem .9rem;
        margin:0 .4rem .4rem 0}
   .btn:active{opacity:.7}
-  /* Modern browsers only: pull the buttons alongside the app info. Old Safari
-     ignores @supports entirely and keeps the stacked layout above. */
-  @supports (display:flex){
-    li{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between}
-    .info{margin-bottom:0;min-width:12rem}
-    .btns{margin-bottom:-.4rem}
-  }
+  .btns{margin-bottom:-.4rem}
   @media(prefers-color-scheme:dark){
-    li{border-color:#2c2c2e} .note{background:#2c2515}
+    li,.tabs{border-color:#2c2c2e} .note{background:#2c2515}
   }
 </style>
 HTML
   echo "<title>${OWNER} OTA Install</title></head><body>"
   echo "<h1>${OWNER} OTA Install</h1>"
   echo "<p class=\"sub\">Tap the button matching your iOS version. Open this page in Safari on the device.</p>"
+  echo "<div class=\"tabs\"><a class=\"tab\" href=\"../\">Cydia repo</a><a class=\"tab active\" href=\"./\">OTA install</a></div>"
   echo "<div class=\"note\">Requires a jailbroken device with AppSync Unified (the apps are ad-hoc signed). On iOS 6/7 you must also install the <strong>ISRG Root X1</strong> CA profile first, otherwise iOS cannot validate this site's certificate and the install will fail to start.</div>"
   echo "<ul>"
   for row in "${ROWS[@]}"; do echo "$row"; done
   echo "</ul>"
-  echo "<p class=\"sub\"><a href=\"../\">&larr; Cydia repo</a></p>"
   echo "</body></html>"
 } > "$OUT/index.html"
 
