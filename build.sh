@@ -48,7 +48,9 @@ while IFS='|' read -r repo package name section description; do
     git -C "$repodir" fetch -q origin </dev/null
     git -C "$repodir" reset --hard -q origin/HEAD </dev/null
   else
-    git clone -q "https://github.com/$OWNER/$repo.git" "$repodir" </dev/null
+    # Blobless clone: full commit history (needed for `rev-list --count`) but
+    # only the current tree's files, so old ipas in history aren't downloaded.
+    git clone -q --filter=blob:none "https://github.com/$OWNER/$repo.git" "$repodir" </dev/null
   fi
 
   # Collect ipas as "iosN:path", sorted ascending by iOS version.
